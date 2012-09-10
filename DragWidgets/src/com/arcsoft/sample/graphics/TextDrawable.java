@@ -1,7 +1,9 @@
-package com.arcsoft.sample.graphics.drawable;
+package com.arcsoft.sample.graphics;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.arcsoft.sample.graphics.EditableDrawable;
 
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
@@ -10,13 +12,14 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Paint.FontMetrics;
 import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
+import android.util.Log;
 
-public class TextDrawable extends Drawable implements ITextEditable {
-    protected final List<Integer> linesBreak = new ArrayList<Integer>();
+public class TextDrawable extends Drawable implements EditableDrawable, FeatherDrawable{
+    protected final List<Integer> mLinesBreak = new ArrayList<Integer>();
     protected final RectF mBoundsF = new RectF(0.0F, 0.0F, 0.0F, 0.0F);
     protected final Paint mPaint = new Paint(451);//256,128,56,8,2,1
-    protected final long  mCursorBlinkTime = 300L;
-  
+    protected final long  CURSORBLINKTIME = 300L;
 
     protected int	mWidth;
     protected int 	mHeight;
@@ -35,10 +38,11 @@ public class TextDrawable extends Drawable implements ITextEditable {
     protected String  mText = "";
 
 
-    Paint.FontMetrics metrics = new Paint.FontMetrics();
+    Paint.FontMetrics mFontMetrics = new Paint.FontMetrics();
 
 	public TextDrawable(String text, float textSize) {
 		mPaint.setDither(true);
+		mPaint.setAntiAlias(true);
 		mPaint.setColor(-1);
 		mPaint.setStyle(Paint.Style.FILL);
 		if (textSize < minTextSize){
@@ -87,8 +91,8 @@ public class TextDrawable extends Drawable implements ITextEditable {
 				 * 循环找最宽的行，它的宽度就是文字的宽度。
 				 */
 				int k = 0;
-				for (int m = 0; m < linesBreak.size(); m++) {
-					int n = linesBreak.get(m).intValue();
+				for (int m = 0; m < mLinesBreak.size(); m++) {
+					int n = mLinesBreak.get(m).intValue();
 					lineWidth = (int) Math.max(lineWidth, getTextWidth(k, n));
 					k = n + 1;
 				}
@@ -96,15 +100,14 @@ public class TextDrawable extends Drawable implements ITextEditable {
 			mWidth = lineWidth + mMinTextWidth;
 		}
 	}
-	
-	
+
 	protected void computeTextHeight() {
 		mHeight = (int) Math.max(getTextSize(), 
 				getNumLines()* getTextSize());
 	}
 
 	protected int getNumLines() {
-		return Math.max(linesBreak.size(), 1);
+		return Math.max(mLinesBreak.size(), 1);
 	}
 	
 	protected void copyBounds(RectF outRectF) {
@@ -133,7 +136,7 @@ public class TextDrawable extends Drawable implements ITextEditable {
 		copyBounds(localRectF);
 		int numLines = getNumLines();
 		float txtSize = getTextSize();
-		getFontMetrics(metrics);
+		getFontMetrics(mFontMetrics);
 		long currTime;
 		if (numLines == 1) {
 			/**
@@ -142,13 +145,12 @@ public class TextDrawable extends Drawable implements ITextEditable {
 			if (!mTextHint) {
 				canvas.drawText(mText, 
 						localRectF.left, 
-						localRectF.top - metrics.top - metrics.bottom, 
+						localRectF.top - mFontMetrics.top - mFontMetrics.bottom, 
 						mStrokePaint);
 			}
-
 			canvas.drawText(mText, 
 					localRectF.left, 
-					localRectF.top - metrics.top - metrics.bottom,
+					localRectF.top - mFontMetrics.top - mFontMetrics.bottom,
 					mPaint);
 		}else{
 			/**
@@ -156,9 +158,9 @@ public class TextDrawable extends Drawable implements ITextEditable {
 			 */
 			int j = 0;
 			float x = localRectF.left;
-			float y = localRectF.top;
-			for (int k = 0; k < linesBreak.size(); k++) {
-				int m = linesBreak.get(k).intValue();
+			float y = localRectF.top - mFontMetrics.top - mFontMetrics.bottom;
+			for (int k = 0; k < mLinesBreak.size(); k++) {
+				int m = mLinesBreak.get(k).intValue();
 				String str = mText.substring(j, m);
 				if (!mTextHint){
 					canvas.drawText(str, x, y, mStrokePaint);
@@ -168,31 +170,33 @@ public class TextDrawable extends Drawable implements ITextEditable {
 				y += txtSize;
 			}
 		}
-		
+
 		/**
 		 * 处于编辑状态要绘制光标
 		 */
 		if (mEditing) {
 			currTime = System.currentTimeMillis();
-			if (currTime - mNow > mCursorBlinkTime){
+			Log.i("XXXXX", "TextDraw,draw currTime: " + currTime);
+			Log.i("XXXXX", "TextDraw,draw mNow: " + mNow);
+			Log.i("XXXXX", "TextDraw,draw currTime - mNow: " + (currTime - mNow));
+			if (currTime - mNow > CURSORBLINKTIME){
 				mShowCursor = !mShowCursor;
+				mNow = currTime;
 			}
-			mNow = currTime;	
-			
+
 			if (mShowCursor) {
 				Rect localRect = new Rect();
 				getLineBounds(-1 + getNumLines(), localRect);
-				float left = 2.0F + (localRectF.left + localRect.width());
-				float top = localRectF.top;
-				float right = 4.0F + (localRectF.left + localRect.width());
-				float bottom = localRectF.top - metrics.top * (numLines - 1)
-						- metrics.top - metrics.bottom;
+				float left = 4.0F + (localRectF.left + localRect.width());
+				float top = localRectF.top - mFontMetrics.top * (numLines - 1);
+				float right = 6.0F + (localRectF.left + localRect.width());
+				float bottom = top - mFontMetrics.top - mFontMetrics.bottom;
 				canvas.drawRect(left, top, right, bottom, mStrokePaint);
 				canvas.drawRect(left, top, right, bottom, mPaint);
 			}
 		}
 	}
-	
+
 	public void getLineBounds(int lineIndex, Rect bounds) {
 		if (mText.length() <= 0) {
 			mPaint.getTextBounds(mText, 0, mText.length(), bounds);
@@ -207,18 +211,16 @@ public class TextDrawable extends Drawable implements ITextEditable {
 			bounds.left = 0;
 			bounds.right = (int) getTextWidth(0, mText.length());
 		} else {
-			if (bounds.width() < mMinTextWidth) {
-				bounds.right = mMinTextWidth;
-			}
-			// 获取多行文字top,bottom
-			bounds.offset(0, (int) (getTextSize() * getNumLines()));
 
-			// 获取多行文字left,right
-			int start = 1 + linesBreak.get(lineIndex - 1).intValue();
-			int end = linesBreak.get(lineIndex).intValue();
+			int start = 1 + mLinesBreak.get(lineIndex - 1).intValue();
+			int end = mLinesBreak.get(lineIndex).intValue();
 			mPaint.getTextBounds(mText, start, end, bounds);
-			bounds.left = 0;
-			bounds.right = (int) getTextWidth(start, end);
+			
+			if (bounds.width() < mMinTextWidth) {
+				bounds.left = 0;
+				bounds.right = mMinTextWidth;
+				bounds.offset(0, (int) (getTextSize() * lineIndex));
+			}
 		}
 	}
 
@@ -324,7 +326,7 @@ public class TextDrawable extends Drawable implements ITextEditable {
 
 	@Override
 	public void setText(String text) {
-		mText = text;
+		mText = TextUtils.isEmpty(text)? "" : text;
 		mTextHint = false;
 		invalidate();
 	}
@@ -352,17 +354,17 @@ public class TextDrawable extends Drawable implements ITextEditable {
 	}
 
 	protected void invalidate() {
-		linesBreak.clear();
+		mLinesBreak.clear();
 		int i = 0;
 		while (true) {
 			int j = mText.indexOf('\n', i);
 			if (j <= -1) {
-				linesBreak.add(Integer.valueOf(mText.length()));
+				mLinesBreak.add(Integer.valueOf(mText.length()));
 				computeSize();
 				return;
 			}
 			i = j + 1;
-			linesBreak.add(Integer.valueOf(j));
+			mLinesBreak.add(Integer.valueOf(j));
 		}
 	}
 	
@@ -373,5 +375,11 @@ public class TextDrawable extends Drawable implements ITextEditable {
 			result = 0;
 		}
 		return result == 1 ? true : false;
+	}
+
+	@Override
+	public void setMinSize(float width, float height) {
+		mMinHeight = height;
+		mMinWidth  = width;
 	}
 }
