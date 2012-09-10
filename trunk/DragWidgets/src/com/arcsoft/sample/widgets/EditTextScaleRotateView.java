@@ -1,6 +1,6 @@
 package com.arcsoft.sample.widgets;
 import com.arcsoft.sample.R;
-import com.arcsoft.sample.graphics.FeatherDrawable;
+import com.arcsoft.sample.graphics.BaseDrawable;
 import com.arcsoft.sample.graphics.TextDrawable;
 import com.arcsoft.sample.widgets.DrawableHighlightView.Mode;
 import com.arcsoft.sample.widgets.DrawableHighlightView;
@@ -11,6 +11,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -42,6 +43,7 @@ public class EditTextScaleRotateView extends EditText {
 	static public class TextState{
 		public String mText;
 		public String mHintText;
+		public Typeface mTextFont;
 		public float mTextSize;
 		public int mTextColor;
 		public int mPadding;
@@ -78,6 +80,12 @@ public class EditTextScaleRotateView extends EditText {
 		mOnEditorActionListener = new MyOnEditorActionListener();
 		mInputMethodManager = (InputMethodManager) getContext().getSystemService( Context.INPUT_METHOD_SERVICE );
 		
+		/**
+		 * 不使用GPU硬件加速,如果使用的,文字无法无限放大
+		 * android:hardwareAccelerated="false"
+		 */
+		setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+		
 		TextState state = new TextState();
 		state.mText="";
 		state.mHintText = TextUtils.isEmpty(getHint()) ?
@@ -96,16 +104,23 @@ public class EditTextScaleRotateView extends EditText {
 	}
 	
 	public int initBy(TextState state){
+		if(null != mTextDraw){
+			mTextDraw = null;
+		}
 		mTextDraw = new TextDrawable(state.mText, state.mTextSize);
 		mTextDraw.setTextColor(state.mTextColor);
 		mTextDraw.setTextHint(state.mHintText);
 
-		DrawableHighlightView hv = new DrawableHighlightView(this, (FeatherDrawable)mTextDraw);
+		if(null != mHighlightView){
+			mHighlightView.dispose();
+		}
+		mHighlightView = null;
+		DrawableHighlightView hv = new DrawableHighlightView(this, (BaseDrawable)mTextDraw);
 		mHighlightView = hv;
 
 		final Matrix localMatrix = new Matrix();
 
-		final int width = 800;
+		final int width  = 800;
 		final int height = 800;
 		final int imageSize = Math.max( width, height );
 
@@ -133,13 +148,13 @@ public class EditTextScaleRotateView extends EditText {
 		final Rect imageRect = new Rect( 0, 0, width, height );
 
 		hv.setSelected(true);
-		hv.setRotateAndScale( true );
+		hv.setRotateAndScale(true);
 		hv.showDelete( false );
 		hv.showAnchors(true);
 
-		hv.setup( localMatrix, imageRect, cropRect, false );
+		hv.setup(localMatrix, imageRect, cropRect, false);
 		hv.drawOutlineFill( false );
-		hv.drawOutlineStroke( true );
+		hv.drawOutlineStroke(true);
 		hv.setPadding(state.mPadding);
 		hv.setMinSize(12);
 		hv.setOutlineStrokeColor(state.mOutlineStrokeColor);

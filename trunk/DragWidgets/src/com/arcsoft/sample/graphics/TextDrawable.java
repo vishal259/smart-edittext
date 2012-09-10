@@ -15,7 +15,7 @@ import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.Log;
 
-public class TextDrawable extends Drawable implements EditableDrawable, FeatherDrawable{
+public class TextDrawable extends Drawable implements EditableDrawable, BaseDrawable{
     protected final List<Integer> mLinesBreak = new ArrayList<Integer>();
     protected final RectF mBoundsF = new RectF(0.0F, 0.0F, 0.0F, 0.0F);
     protected final Paint mPaint = new Paint(451);//256,128,56,8,2,1

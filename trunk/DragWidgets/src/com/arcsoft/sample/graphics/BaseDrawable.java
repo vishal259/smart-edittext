@@ -8,7 +8,7 @@ import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.drawable.Drawable;
 
-public abstract interface FeatherDrawable {
+public abstract interface BaseDrawable {
 	public abstract void clearColorFilter();
 
 	public abstract Rect copyBounds();
