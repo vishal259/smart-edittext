@@ -1,0 +1,14 @@
+<resources>
+    <style name="Widget">
+        <item name="android:textAppearance">?android:attr/textAppearance</item>
+    </style>
+    <style name="Widget.EditText">
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:background">?android:attr/editTextBackground</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceMediumInverse</item>
+        <item name="android:textColor">?android:attr/editTextColor</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+</resources>

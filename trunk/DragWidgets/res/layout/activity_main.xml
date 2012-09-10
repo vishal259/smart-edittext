@@ -3,12 +3,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <!-- <com.arcsoft.sample.widgets.SmartTextView        
-        android:id="@+id/SMARTTEXTVIEW"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/> -->
-    <com.arcsoft.sample.widgets.TextEffectView     
-        android:id="@+id/text_effect_view"
+    <com.arcsoft.sample.widgets.EditTextScaleRotateView
+        android:id="@+id/EditTextScaleRotateView"
+        android:text="请在这里输入文字"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/> 
 </RelativeLayout>
