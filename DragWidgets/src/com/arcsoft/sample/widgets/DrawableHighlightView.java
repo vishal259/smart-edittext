@@ -14,7 +14,7 @@ import android.view.View;
 import com.arcsoft.sample.R;
 import com.arcsoft.sample.graphics.Point2D;
 import com.arcsoft.sample.graphics.EditableDrawable;
-import com.arcsoft.sample.graphics.FeatherDrawable;
+import com.arcsoft.sample.graphics.BaseDrawable;
 
 /**
  * The Class DrawableHighlightView.
@@ -118,7 +118,7 @@ public class DrawableHighlightView {
 	private Matrix mMatrix;
 	
 	/** The m content. */
-	private final FeatherDrawable mContent;
+	private final BaseDrawable mContent;
 
 	/** The m anchor rotate. */
 	private Drawable mAnchorRotate;
@@ -195,7 +195,7 @@ public class DrawableHighlightView {
 	 * @param ctx the ctx
 	 * @param content the content
 	 */
-	public DrawableHighlightView( final View ctx, final FeatherDrawable content ) {
+	public DrawableHighlightView( final View ctx, final BaseDrawable content ) {
 		mContext = ctx;
 		mContent = content;
 		updateRatio();
@@ -933,7 +933,7 @@ public class DrawableHighlightView {
 	 *
 	 * @return the content
 	 */
-	public FeatherDrawable getContent() {
+	public BaseDrawable getContent() {
 		return mContent;
 	}
 
