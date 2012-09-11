@@ -9,18 +9,20 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Display;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -36,25 +38,36 @@ public class EditTextScaleRotateView extends EditText {
 	InputMethodManager mInputMethodManager;
 
 	int mMotionEdge;
-	
+
 	/**
 	 * 用于保存和恢复文字
 	 */
 	static public class TextState{
 		public String mText;
-		public String mHintText;
-		public Typeface mTextFont;
 		public float mTextSize;
 		public int mTextColor;
 		public int mPadding;
 		
-		public int mLeftTopX;//左上点X坐标
-		public int mLeftTopY;//左上点Y坐标
-		public int mDegree; //与水平方向夹角，逆时针
+		public float mRectCenterX;//文字矩形中心点X坐标
+		public float mRectCenterY;//文字矩形中心点Y坐标
+		public float mDegree;   //与水平方向夹角，逆时针
 
-		public int mStrokeWidth;//字体描边
+		public float mStrokeWidth;//字体描边
 		public int mOutlineEllipse;//边框圆角
 		public int mOutlineStrokeColor;//边框颜色
+		
+		public TextState(){
+			mText="";
+			mTextColor = 0xffff0000;
+			mTextSize  = 24;
+			mRectCenterX = 0;
+			mRectCenterY = 0;
+			mDegree = 0;
+			mOutlineEllipse = 12;
+			mOutlineStrokeColor = 0xff00FF00;
+			mStrokeWidth = 5;
+			mPadding = 15;
+		}
 	};
 	
 	public EditTextScaleRotateView(Context context) {
@@ -88,28 +101,26 @@ public class EditTextScaleRotateView extends EditText {
 		
 		TextState state = new TextState();
 		state.mText="";
-		state.mHintText = TextUtils.isEmpty(getHint()) ?
-				getContext().getString(R.string.edittext_defaut_hint) : (String)getHint();
-		state.mTextColor = 0xffff0000;
-		state.mTextSize  = getTextSize();
-		state.mLeftTopX = 0;
-		state.mLeftTopY = 0;
-		
-		state.mDegree = 0;
-		state.mOutlineEllipse = 12;
-		state.mOutlineStrokeColor = 0xff00FF00;
-		state.mStrokeWidth = 5;
-		state.mPadding = 15;
+		state.mRectCenterX = 400;
+		state.mRectCenterY = 200;
 		initBy(state);
 	}
 	
 	public int initBy(TextState state){
+		if(null == state){
+			return -1;
+		}
+		
 		if(null != mTextDraw){
 			mTextDraw = null;
 		}
 		mTextDraw = new TextDrawable(state.mText, state.mTextSize);
 		mTextDraw.setTextColor(state.mTextColor);
-		mTextDraw.setTextHint(state.mHintText);
+		String hint = TextUtils.isEmpty(getHint()) ?
+				getContext().getString(R.string.edittext_defaut_hint) : (String)getHint();
+		mTextDraw.setTextHint(hint);
+		mTextDraw.setText(state.mText);
+		mTextDraw.setTextSize(state.mTextSize);
 
 		if(null != mHighlightView){
 			mHighlightView.dispose();
@@ -120,23 +131,19 @@ public class EditTextScaleRotateView extends EditText {
 
 		final Matrix localMatrix = new Matrix();
 
-		final int width  = 800;
-		final int height = 800;
-		final int imageSize = Math.max( width, height );
+		final WindowManager wm = (WindowManager)getContext().getSystemService(Context.WINDOW_SERVICE);
+		Display display = wm.getDefaultDisplay();
+		Point outSize = new Point();
+		display.getSize(outSize);
+		final int width  = outSize.x;
+		final int height = outSize.y;
 
 		// width/height
 		int cropWidth  = mTextDraw.getIntrinsicWidth();
 		int cropHeight = mTextDraw.getIntrinsicHeight();
 		
-		final int cropSize = Math.max( cropWidth, cropHeight );
-		
-		if( cropSize > imageSize ){
-			cropWidth = width/2;
-			cropHeight = height/2;
-		}
-
-		final int x = ( width - cropWidth ) / 2;
-		final int y = ( height - cropHeight ) / 2;
+		final float x = state.mRectCenterX - cropWidth/2;
+		final float y = state.mRectCenterY - cropHeight/2;
 
 		final Matrix matrix = new Matrix( localMatrix );
 		matrix.invert( matrix );
@@ -153,6 +160,7 @@ public class EditTextScaleRotateView extends EditText {
 		hv.showAnchors(true);
 
 		hv.setup(localMatrix, imageRect, cropRect, false);
+		hv.setRotate(-state.mDegree);
 		hv.drawOutlineFill( false );
 		hv.drawOutlineStroke(true);
 		hv.setPadding(state.mPadding);
@@ -165,6 +173,28 @@ public class EditTextScaleRotateView extends EditText {
 		
 		return 0;
 	}
+	
+	
+	public TextState getTextState(){
+		TextState state = new TextState();
+		if(mHighlightView == null || mTextDraw == null){
+			return state;
+		}
+		state.mDegree = -mHighlightView.getRotate();
+
+		state.mOutlineEllipse = mHighlightView.getOutlineEllipse();
+		state.mOutlineStrokeColor = mHighlightView.getOutlineStrokeColor();
+		state.mPadding = mHighlightView.getPadding();
+		state.mRectCenterX = mHighlightView.getCropRectF().centerX();
+		state.mRectCenterY = mHighlightView.getCropRectF().centerY();
+		state.mStrokeWidth = mHighlightView.getOutlineStrokePaint().getStrokeWidth();
+		state.mText   = (String) mTextDraw.getText();
+		state.mTextColor = mTextDraw.getTextColor();
+		state.mTextSize  = mTextDraw.getTextSize();
+		
+		return state;
+	}
+	
 	
 	@Override
 	public boolean onTouchEvent( MotionEvent event ) {
@@ -231,7 +261,7 @@ public class EditTextScaleRotateView extends EditText {
 	public class MyOnEditorActionListener implements OnEditorActionListener{
 		@Override
 		public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {	
-			if (!this.equals( v )) {
+			if (!equals( v )) {
 				return false;
 			}
 			

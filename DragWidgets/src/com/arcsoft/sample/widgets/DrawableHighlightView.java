@@ -779,6 +779,14 @@ public class DrawableHighlightView {
 		mRotateAndScale = value;
 	}
 
+	public void setRotate( final float degree ) {
+		mRotation = degree;
+	}
+	
+	public float getRotate() {
+		return mRotation;
+	}
+	
 	/**
 	 * Show delete.
 	 *
@@ -902,6 +910,10 @@ public class DrawableHighlightView {
 		invalidate();
 		mContext.invalidate();
 	}
+	
+	public int getOutlineEllipse() {
+		return mOutlineEllipse;
+	}
 
 	/**
 	 * Sets the outline stroke color.
@@ -914,6 +926,10 @@ public class DrawableHighlightView {
 		mOutlineStrokePaint.setColor( mMode != Mode.None ? mOutlineStrokeColorPressed : mOutlineStrokeColor );
 		invalidate();
 		mContext.invalidate();
+	}
+	
+	public int getOutlineStrokeColor() {
+		return mOutlineStrokeColor;
 	}
 
 	/**
@@ -993,5 +1009,9 @@ public class DrawableHighlightView {
 	 */
 	public void setPadding( int value ) {
 		mPadding = value;
+	}
+	
+	public int getPadding() {
+		return mPadding;
 	}
 }
